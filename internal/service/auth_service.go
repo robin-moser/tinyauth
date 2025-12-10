@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"regexp"
@@ -359,7 +360,51 @@ func (auth *AuthService) IsAuthEnabled(uri string, path config.AppPath) (bool, e
 	return true, nil
 }
 
+// GetBasicAuth extracts basic authentication credentials from the request.
+//
+// This function supports two authentication headers:
+//
+//  1. Proxy-Authorization header (checked first):
+//     Used when clients need to authenticate with Tinyauth while preserving
+//     a separate Authorization header for the backend service. This is useful
+//     for scenarios where:
+//     - The backend service requires its own authentication (e.g., API keys, bearer tokens)
+//     - Clients use tools like curl that need to pass through credentials to upstream services
+//     - Applications have layered authentication requirements
+//
+//  2. Standard Authorization header (fallback):
+//     The traditional HTTP Basic Auth header used when Proxy-Authorization is absent.
+//
+// Header Priority:
+//   - If Proxy-Authorization is present and valid, it takes precedence
+//   - If Proxy-Authorization is absent or invalid, falls back to Authorization header
+//
+// Supported Formats for Proxy-Authorization:
+//   - "Basic <base64-encoded-credentials>" (RFC 7617 compliant)
+//   - "user:password" (direct plaintext format for convenience)
+//
+// Example Usage:
+//
+//	# Authenticate with Tinyauth via Proxy-Authorization, pass API key to backend
+//	curl -H "Proxy-Authorization: Basic dXNlcjpwYXNz" \
+//	     -H "Authorization: Bearer <api-token>" \
+//	     https://app.example.com/api/resource
+//
+// When Proxy-Authorization is used, the original Authorization header is forwarded
+// untouched to the backend service (see setHeaders in proxy_controller.go).
 func (auth *AuthService) GetBasicAuth(c *gin.Context) *config.User {
+	// Check Proxy-Authorization header first
+	if proxyAuth := c.Request.Header.Get("Proxy-Authorization"); proxyAuth != "" {
+		username, password, ok := auth.parseProxyAuth(proxyAuth)
+		if ok {
+			return &config.User{
+				Username: username,
+				Password: password,
+			}
+		}
+	}
+
+	// Fall back to standard Authorization header
 	username, password, ok := c.Request.BasicAuth()
 	if !ok {
 		log.Debug().Msg("No basic auth provided")
@@ -420,4 +465,67 @@ func (auth *AuthService) IsBypassedIP(acls config.AppIP, ip string) bool {
 
 	log.Debug().Str("ip", ip).Msg("IP not in bypass list, continuing with authentication")
 	return false
+}
+
+// parseProxyAuth parses the Proxy-Authorization header value.
+//
+// Supported formats:
+//   - "Basic <base64>" - Standard RFC 7617 Basic authentication
+//   - "user:password"  - Direct plaintext credentials (non-standard, for convenience)
+//
+// Security Note on the "user:password" format:
+// The direct plaintext format is NON-STANDARD and exists only for convenience in
+// controlled environments (e.g., internal tooling, CI/CD pipelines). It has several
+// security implications:
+//
+//  1. NO OBFUSCATION: Credentials are fully visible in logs, browser dev tools,
+//     proxy logs, and network inspection tools. The Base64 encoding in "Basic" auth
+//     isn't encryption, but it at least prevents casual shoulder-surfing.
+//
+//  2. NOT RFC-COMPLIANT: RFC 7235 (HTTP Authentication) and RFC 7617 (Basic Auth)
+//     define the "Basic <base64>" format. Proxies, WAFs, and security tools may
+//     not recognize or properly handle the raw format, leading to:
+//     - Credentials being logged by intermediaries that don't know to redact them
+//     - Security scanners flagging it as malformed/suspicious
+//
+//  3. INJECTION RISK: Without the "Basic " prefix, the header value could be
+//     confused with other authentication schemes or manipulated more easily.
+//
+// RECOMMENDATION: Always use "Basic <base64>" format in production:
+//
+//	# Generate the base64 value:
+//	echo -n "user:password" | base64
+//	# Result: dXNlcjpwYXNzd29yZA==
+//
+//	# Use in header:
+//	Proxy-Authorization: Basic dXNlcjpwYXNzd29yZA==
+func (auth *AuthService) parseProxyAuth(authHeader string) (username, password string, ok bool) {
+	// Handle "Basic <base64>" format (RFC 7617)
+	const prefix = "Basic "
+	if strings.HasPrefix(authHeader, prefix) {
+		decoded, err := base64.StdEncoding.DecodeString(authHeader[len(prefix):])
+		if err != nil {
+			log.Debug().Err(err).Msg("Failed to decode Proxy-Authorization base64")
+			return "", "", false
+		}
+		username, password, ok = strings.Cut(string(decoded), ":")
+		return username, password, ok
+	}
+
+	// Handle direct "user:password" format (non-standard, for convenience only)
+	if strings.Contains(authHeader, ":") {
+		log.Warn().Msg("Proxy-Authorization using non-standard plaintext format; consider using 'Basic <base64>' for better security")
+		username, password, ok = strings.Cut(authHeader, ":")
+		return username, password, ok
+	}
+
+	return "", "", false
+}
+
+// IsUsingProxyAuth returns true if the request includes a Proxy-Authorization header.
+// This is used by the proxy controller to determine whether to forward the original
+// Authorization header untouched (when Proxy-Authorization is used for Tinyauth auth)
+// or to potentially override it with configured backend credentials.
+func (auth *AuthService) IsUsingProxyAuth(c *gin.Context) bool {
+	return c.Request.Header.Get("Proxy-Authorization") != ""
 }

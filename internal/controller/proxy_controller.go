@@ -265,21 +265,46 @@ func (controller *ProxyController) proxyHandler(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("%s/login?%s", controller.config.AppURL, queries.Encode()))
 }
 
+// setHeaders sets the Authorization response header for the upstream service.
+//
+// This function handles two distinct scenarios:
+//
+//  1. Proxy-Authorization mode (Proxy-Authorization header is present):
+//     When clients authenticate to Tinyauth via Proxy-Authorization, the original
+//     Authorization header is forwarded untouched to the backend. This allows clients
+//     to pass separate credentials (API keys, bearer tokens, etc.) to the upstream
+//     service while authenticating with Tinyauth separately.
+//
+//  2. Standard mode (no Proxy-Authorization header):
+//     Uses the traditional behavior:
+//     - If backend basic auth is configured via labels (acls.Response.BasicAuth), uses those credentials
+//     - Otherwise, forwards the incoming Authorization header to the backend
+//
+// This design enables use cases like:
+//   - Authenticating with Tinyauth + passing an API key to the backend
+//   - Multi-layered authentication architectures
+//   - Programmatic API access with separate auth layers
 func (controller *ProxyController) setHeaders(c *gin.Context, acls config.App) {
-	c.Header("Authorization", c.Request.Header.Get("Authorization"))
+	// If using Proxy-Authorization, forward the original Authorization header untouched
+	if controller.auth.IsUsingProxyAuth(c) {
+		c.Header("Authorization", c.Request.Header.Get("Authorization"))
+	} else {
+		// Use standard behavior: forward Authorization or set from basic auth config
+		basicPassword := utils.GetSecret(acls.Response.BasicAuth.Password, acls.Response.BasicAuth.PasswordFile)
+
+		if acls.Response.BasicAuth.Username != "" && basicPassword != "" {
+			log.Debug().Str("username", acls.Response.BasicAuth.Username).Msg("Setting basic auth header")
+			c.Header("Authorization", fmt.Sprintf("Basic %s", utils.GetBasicAuth(acls.Response.BasicAuth.Username, basicPassword)))
+		} else {
+			c.Header("Authorization", c.Request.Header.Get("Authorization"))
+		}
+	}
 
 	headers := utils.ParseHeaders(acls.Response.Headers)
 
 	for key, value := range headers {
 		log.Debug().Str("header", key).Msg("Setting header")
 		c.Header(key, value)
-	}
-
-	basicPassword := utils.GetSecret(acls.Response.BasicAuth.Password, acls.Response.BasicAuth.PasswordFile)
-
-	if acls.Response.BasicAuth.Username != "" && basicPassword != "" {
-		log.Debug().Str("username", acls.Response.BasicAuth.Username).Msg("Setting basic auth header")
-		c.Header("Authorization", fmt.Sprintf("Basic %s", utils.GetBasicAuth(acls.Response.BasicAuth.Username, basicPassword)))
 	}
 }
 
