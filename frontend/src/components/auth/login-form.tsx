@@ -7,11 +7,11 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "../ui/form";
 import { Button } from "../ui/button";
 import { loginSchema, LoginSchema } from "@/schemas/login-schema";
+import { User, Lock, ArrowRight } from "lucide-react";
 import z from "zod";
 
 interface Props {
@@ -40,12 +40,12 @@ export const LoginForm = (props: Props) => {
           name="username"
           render={({ field }) => (
             <FormItem className="mb-4 gap-0">
-              <FormLabel className="mb-2">{t("loginUsername")}</FormLabel>
               <FormControl className="mb-1">
                 <Input
                   placeholder={t("loginUsername")}
                   disabled={loading}
                   autoComplete="username"
+                  icon={<User className="size-4" />}
                   {...field}
                 />
               </FormControl>
@@ -58,30 +58,23 @@ export const LoginForm = (props: Props) => {
           name="password"
           render={({ field }) => (
             <FormItem className="mb-4 gap-0">
-              <div className="relative mb-1">
-                <FormLabel className="mb-2">{t("loginPassword")}</FormLabel>
-                <FormControl>
-                  <Input
-                    placeholder={t("loginPassword")}
-                    type="password"
-                    disabled={loading}
-                    autoComplete="current-password"
-                    {...field}
-                  />
-                </FormControl>
-                <a
-                  href="/forgot-password"
-                  className="text-muted-foreground text-sm absolute right-0 bottom-[2.565rem]" // 2.565 is *just* perfect
-                >
-                  {t("forgotPasswordTitle")}
-                </a>
-              </div>
+              <FormControl className="mb-1">
+                <Input
+                  placeholder={t("loginPassword")}
+                  type="password"
+                  disabled={loading}
+                  autoComplete="current-password"
+                  icon={<Lock className="size-4" />}
+                  {...field}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <Button className="w-full" type="submit" loading={loading}>
           {t("loginSubmit")}
+          <ArrowRight className="size-4" />
         </Button>
       </form>
     </Form>

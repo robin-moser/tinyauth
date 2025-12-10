@@ -58,7 +58,7 @@ func (c *rootCmd) Register() {
 		{"log-level", "info", "Log level."},
 		{"app-title", "Tinyauth", "Title of the app."},
 		{"forgot-password-message", "", "Message to show on the forgot password page."},
-		{"background-image", "/background.jpg", "Background image URL for the login page."},
+		{"background-image", "", "Background image URL for the login page."},
 		{"ldap-address", "", "LDAP server address (e.g. ldap://localhost:389)."},
 		{"ldap-bind-dn", "", "LDAP bind DN (e.g. uid=user,dc=example,dc=com)."},
 		{"ldap-bind-password", "", "LDAP bind password."},

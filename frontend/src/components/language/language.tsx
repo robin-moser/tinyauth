@@ -4,10 +4,10 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "../ui/select";
 import { useState } from "react";
 import i18n from "@/lib/i18n/i18n";
+import { Globe } from "lucide-react";
 
 export const LanguageSelector = () => {
   const [language, setLanguage] = useState<SupportedLanguage>(
@@ -21,8 +21,8 @@ export const LanguageSelector = () => {
 
   return (
     <Select onValueChange={handleSelect} value={language}>
-      <SelectTrigger>
-        <SelectValue placeholder="Select language" />
+      <SelectTrigger className="!size-10 px-0 justify-center" showChevron={false}>
+        <Globe className="size-4" />
       </SelectTrigger>
       <SelectContent>
         {Object.entries(languages).map(([key, value]) => (

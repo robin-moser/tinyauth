@@ -12,6 +12,7 @@ import { isValidUrl } from "@/lib/utils";
 import { Trans, useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
+import { ArrowRight, ShieldAlert, ShieldX, X } from "lucide-react";
 
 export const ContinuePage = () => {
   const { cookieDomain, disableUiWarnings } = useAppContext();
@@ -99,10 +100,13 @@ export const ContinuePage = () => {
     return (
       <Card role="alert" aria-live="assertive" className="min-w-xs sm:min-w-sm">
         <CardHeader>
-          <CardTitle className="text-3xl">
+          <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-destructive/10">
+            <ShieldX className="size-6 text-destructive" />
+          </div>
+          <CardTitle className="text-3xl text-center">
             {t("continueUntrustedRedirectTitle")}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-center">
             <Trans
               i18nKey="continueUntrustedRedirectSubtitle"
               t={t}
@@ -120,12 +124,10 @@ export const ContinuePage = () => {
             variant="destructive"
           >
             {t("continueTitle")}
+            <ArrowRight className="size-4" />
           </Button>
-          <Button
-            onClick={() => navigate("/logout")}
-            variant="outline"
-            disabled={loading}
-          >
+          <Button onClick={() => navigate("/logout")} variant="outline" disabled={loading}>
+            <X className="size-4" />
             {t("cancelTitle")}
           </Button>
         </CardFooter>
@@ -137,10 +139,13 @@ export const ContinuePage = () => {
     return (
       <Card role="alert" aria-live="assertive" className="min-w-xs sm:min-w-sm">
         <CardHeader>
-          <CardTitle className="text-3xl">
+          <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-amber-500/10">
+            <ShieldAlert className="size-6 text-amber-500" />
+          </div>
+          <CardTitle className="text-3xl text-center">
             {t("continueInsecureRedirectTitle")}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-center">
             <Trans
               i18nKey="continueInsecureRedirectSubtitle"
               t={t}
@@ -153,12 +158,10 @@ export const ContinuePage = () => {
         <CardFooter className="flex flex-col items-stretch gap-2">
           <Button onClick={handleRedirect} loading={loading} variant="warning">
             {t("continueTitle")}
+            <ArrowRight className="size-4" />
           </Button>
-          <Button
-            onClick={() => navigate("/logout")}
-            variant="outline"
-            disabled={loading}
-          >
+          <Button onClick={() => navigate("/logout")} variant="outline" disabled={loading}>
+            <X className="size-4" />
             {t("cancelTitle")}
           </Button>
         </CardFooter>
@@ -169,15 +172,16 @@ export const ContinuePage = () => {
   return (
     <Card className="min-w-xs sm:min-w-sm">
       <CardHeader>
-        <CardTitle className="text-3xl">
+        <CardTitle className="text-3xl text-center">
           {t("continueRedirectingTitle")}
         </CardTitle>
-        <CardDescription>{t("continueRedirectingSubtitle")}</CardDescription>
+        <CardDescription className="text-center">{t("continueRedirectingSubtitle")}</CardDescription>
       </CardHeader>
       {showRedirectButton && (
         <CardFooter className="flex flex-col items-stretch">
           <Button onClick={handleRedirect}>
             {t("continueRedirectManually")}
+            <ArrowRight className="size-4" />
           </Button>
         </CardFooter>
       )}

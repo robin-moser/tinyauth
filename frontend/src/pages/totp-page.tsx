@@ -13,6 +13,7 @@ import { TotpSchema } from "@/schemas/totp-schema";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useEffect, useId, useRef } from "react";
+import { ShieldCheck, ArrowRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation } from "react-router";
 import { toast } from "sonner";
@@ -63,8 +64,11 @@ export const TotpPage = () => {
   return (
     <Card className="min-w-xs sm:min-w-sm">
       <CardHeader>
-        <CardTitle className="text-3xl">{t("totpTitle")}</CardTitle>
-        <CardDescription>{t("totpSubtitle")}</CardDescription>
+        <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10">
+          <ShieldCheck className="size-6 text-primary" />
+        </div>
+        <CardTitle className="text-3xl text-center">{t("totpTitle")}</CardTitle>
+        <CardDescription className="text-center">{t("totpSubtitle")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center">
         <TotpForm
@@ -76,6 +80,7 @@ export const TotpPage = () => {
       <CardFooter className="flex flex-col items-stretch">
         <Button form={formId} type="submit" loading={totpMutation.isPending}>
           {t("continueTitle")}
+          <ArrowRight className="size-4" />
         </Button>
       </CardFooter>
     </Card>

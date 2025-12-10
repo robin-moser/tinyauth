@@ -29,7 +29,7 @@ type Config struct {
 	LoginTimeout          int    `mapstructure:"login-timeout"`
 	LoginMaxRetries       int    `mapstructure:"login-max-retries"`
 	ForgotPasswordMessage string `mapstructure:"forgot-password-message"`
-	BackgroundImage       string `mapstructure:"background-image" validate:"required"`
+	BackgroundImage       string `mapstructure:"background-image"`
 	LdapAddress           string `mapstructure:"ldap-address"`
 	LdapBindDN            string `mapstructure:"ldap-bind-dn"`
 	LdapBindPassword      string `mapstructure:"ldap-bind-password"`
