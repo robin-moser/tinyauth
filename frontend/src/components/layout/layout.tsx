@@ -14,13 +14,20 @@ const BaseLayout = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <div
-      className="relative flex flex-col justify-center items-center min-h-svh"
+      className="relative flex flex-col justify-center items-center min-h-svh overflow-hidden"
       style={{
-        backgroundImage: `url(${backgroundImage})`,
+        backgroundImage: backgroundImage ? `url(${backgroundImage})` : undefined,
         backgroundSize: "cover",
         backgroundPosition: "center",
       }}
     >
+      {/* Gradient background (shown when no background image) */}
+      {!backgroundImage && (
+        <div className="fixed inset-0 -z-10 bg-background">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/10" />
+          <div className="absolute inset-0 bg-dot-pattern" />
+        </div>
+      )}
       <div className="absolute top-5 right-5 flex flex-row gap-2">
         <ThemeToggle />
         <LanguageSelector />

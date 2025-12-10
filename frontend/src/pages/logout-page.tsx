@@ -10,6 +10,7 @@ import { useUserContext } from "@/context/user-context";
 import { useMutation } from "@tanstack/react-query";
 import axios from "axios";
 import { useEffect, useRef } from "react";
+import { LogOut, UserCircle } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { toast } from "sonner";
@@ -53,8 +54,11 @@ export const LogoutPage = () => {
   return (
     <Card className="min-w-xs sm:min-w-sm">
       <CardHeader>
-        <CardTitle className="text-3xl">{t("logoutTitle")}</CardTitle>
-        <CardDescription>
+        <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10">
+          <UserCircle className="size-6 text-primary" />
+        </div>
+        <CardTitle className="text-3xl text-center">{t("logoutTitle")}</CardTitle>
+        <CardDescription className="text-center">
           {provider !== "username" ? (
             <Trans
               i18nKey="logoutOauthSubtitle"
@@ -86,6 +90,7 @@ export const LogoutPage = () => {
           loading={logoutMutation.isPending}
           onClick={() => logoutMutation.mutate()}
         >
+          <LogOut className="size-4" />
           {t("logoutTitle")}
         </Button>
       </CardFooter>
